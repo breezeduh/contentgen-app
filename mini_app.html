@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ContentGen</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --accent: #7c6af7;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(124,106,247,0.18);
+    --text: #f0f0f5;
+    --muted: #7b7b8e;
+    --success: #34d399;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── LAYOUT ── */
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 0 80px;
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 20px 14px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-back {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface);
+    border-radius: 50%;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 18px;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .topbar-back:hover { background: var(--surface2); }
+  .topbar-title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+  }
+  .topbar-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  /* ── SCREEN ── */
+  .screen { display: none; animation: fadeIn 0.18s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 32px 20px 24px;
+    text-align: center;
+  }
+  .hero-logo {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--accent), #c084fc);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 40px var(--accent-glow);
+  }
+  .hero h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 20px;
+    margin-bottom: 8px;
+    margin-top: 24px;
+  }
+
+  /* ── CARD LIST ── */
+  .card-list {
+    padding: 0 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card:active { transform: scale(0.98); background: var(--surface2); }
+  .card:hover { background: var(--surface2); border-color: var(--accent); }
+
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .card-icon.purple { background: rgba(124,106,247,0.15); }
+  .card-icon.blue   { background: rgba(96,165,250,0.15); }
+  .card-icon.green  { background: rgba(52,211,153,0.15); }
+  .card-icon.orange { background: rgba(251,146,60,0.15); }
+  .card-icon.pink   { background: rgba(244,114,182,0.15); }
+  .card-icon.teal   { background: rgba(45,212,191,0.15); }
+
+  .card-body { flex: 1; min-width: 0; }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .card-desc {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-arrow {
+    color: var(--muted);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* selected state */
+  .card.selected {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .card.selected .card-arrow { color: var(--accent); }
+
+  /* ── OPTION CHIPS ── */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 20px;
+  }
+  .chip {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip:active { transform: scale(0.96); }
+  .chip.selected {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 16px rgba(124,106,247,0.3);
+  }
+
+  /* ── INPUT ── */
+  .input-wrap {
+    padding: 0 20px;
+  }
+  .input-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .input-field {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 15px;
+    font-family: var(--font);
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--muted); }
+
+  /* ── BUTTON ── */
+  .btn {
+    width: calc(100% - 40px);
+    margin: 20px;
+    padding: 15px;
+    border-radius: var(--radius);
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #a855f7);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(124,106,247,0.35);
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled {
+    background: var(--surface2);
+    color: var(--muted);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+  .btn-danger {
+    background: rgba(248,113,113,0.15);
+    color: var(--danger);
+    border: 1.5px solid rgba(248,113,113,0.3);
+  }
+  .btn-danger:active { background: rgba(248,113,113,0.25); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px;
+  }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-purple { background: rgba(124,106,247,0.15); color: var(--accent2); }
+  .badge-green  { background: rgba(52,211,153,0.12); color: var(--success); }
+
+  /* ── STATUS / PROGRESS ── */
+  .status-box {
+    margin: 0 20px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .status-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--accent-glow);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .progress-bar-track {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #a855f7);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── INFO ROW ── */
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .info-row .key { color: var(--muted); }
+  .info-row .val { font-weight: 500; }
+
+  /* ── FILE UPLOAD ── */
+  .upload-area {
+    margin: 0 20px;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+  }
+  .upload-area:hover, .upload-area.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .upload-sub { font-size: 12px; color: var(--muted); }
+  .upload-area.has-file {
+    border-style: solid;
+    border-color: var(--success);
+    background: rgba(52,211,153,0.06);
+  }
+  .upload-area.has-file .upload-icon { opacity: 1; }
+  #file-input { display: none; }
+
+  /* ── RESULT ── */
+  .result-icon {
+    font-size: 48px;
+    text-align: center;
+    margin: 24px 0 16px;
+  }
+  .result-title {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .result-sub {
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 24px;
+    padding: 0 20px;
+  }
+  .result-stats {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 20px 20px;
+    padding: 16px;
+  }
+
+  /* ── TOGGLE ── */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 0 12px;
+    cursor: pointer;
+  }
+  .toggle-label { font-size: 15px; font-weight: 500; }
+  .toggle-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .toggle-switch {
+    width: 44px; height: 26px;
+    background: var(--surface2);
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--accent); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .toggle-switch.on::after { transform: translateX(18px); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── STEP INDICATOR ── */
+  .steps {
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    margin-bottom: 20px;
+  }
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.2s;
+  }
+  .step-dot.active {
+    background: var(--accent);
+    width: 24px;
+    border-radius: 4px;
+  }
+  .step-dot.done { background: var(--success); }
+  .step-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin: 0 6px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: HOME -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="hero">
+      <div class="hero-logo">⚡</div>
+      <h1>ContentGen</h1>
+      <p>Генерация документов и медиа с помощью AI</p>
+    </div>
+
+    <div class="section-label">Проекты</div>
+    <div class="card-list">
+      <div class="card" onclick="selectProject('project_1')">
+        <div class="card-icon purple">💻</div>
+        <div class="card-body">
+          <div class="card-title">W — категории</div>
+          <div class="card-desc">Ноутбуки и смартфоны по URL + тип</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="selectProject('project_2')">
+        <div class="card-icon blue">📱</div>
+        <div class="card-body">
+          <div class="card-title">W — модели</div>
+          <div class="card-desc">Генерация по ссылке на страницу модели</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="selectProject('project_3')">
+        <div class="card-icon green">📝</div>
+        <div class="card-body">
+          <div class="card-title">Генерация статей</div>
+          <div class="card-desc">Общая или Банка — по названию темы</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="selectProject('project_4')">
+        <div class="card-icon orange">🏦</div>
+        <div class="card-body">
+          <div class="card-title">B — услуги</div>
+          <div class="card-desc">Описание банковских услуг</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="section-label">Инструменты</div>
+    <div class="card-list">
+      <div class="card" onclick="selectTool('article_image')">
+        <div class="card-icon teal">🖼️</div>
+        <div class="card-body">
+          <div class="card-title">Изображение для статьи</div>
+          <div class="card-desc">Генерация по названию статьи</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="selectTool('article_image_r')">
+        <div class="card-icon teal">🌐</div>
+        <div class="card-body">
+          <div class="card-title">Изображение по URL</div>
+          <div class="card-desc">Анализирует страницу и генерирует</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="selectTool('meta_tags')">
+        <div class="card-icon pink">🏷️</div>
+        <div class="card-body">
+          <div class="card-title">Мета-теги</div>
+          <div class="card-desc">Title + Description из .docx / .zip</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="selectTool('chat')">
+        <div class="card-icon purple">💬</div>
+        <div class="card-body">
+          <div class="card-title">AI чат</div>
+          <div class="card-desc">Свободный диалог с моделью</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+
+    <div style="height:32px"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: PROJECT 1 -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-project_1">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">W — категории</div>
+        <div class="topbar-sub">Генерация по URL и типу</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Категория</div>
+    <div class="card-list">
+      <div class="card" id="cat-notebook" onclick="setCategory('notebook','project_1')">
+        <div class="card-icon purple">💻</div>
+        <div class="card-body">
+          <div class="card-title">Ноутбуки</div>
+          <div class="card-desc">Категории ноутбуков</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" id="cat-phone" onclick="setCategory('phone','project_1')">
+        <div class="card-icon blue">📱</div>
+        <div class="card-body">
+          <div class="card-title">Смартфоны</div>
+          <div class="card-desc">Категории смартфонов</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="section-label">Тип текста</div>
+    <div class="chips" id="chips-type-1">
+      <div class="chip selected" onclick="setTextType('basic',1)">basic</div>
+      <div class="chip" onclick="setTextType('memory',1)">memory</div>
+      <div class="chip" onclick="setTextType('ozu',1)">ozu</div>
+      <div class="chip" onclick="setTextType('color',1)">color</div>
+      <div class="chip" onclick="setTextType('chip',1)">chip</div>
+    </div>
+
+    <div class="section-label">Оформление</div>
+    <div class="card-list">
+      <div class="toggle-row" onclick="toggleFormatting('p1')">
+        <div>
+          <div class="toggle-label">Применить оформление</div>
+          <div class="toggle-sub">Форматирование итогового документа</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-p1"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Режим</div>
+    <div class="card-list">
+      <div class="card" onclick="showInputP1('single')">
+        <div class="card-icon green">📄</div>
+        <div class="card-body">
+          <div class="card-title">Одиночный</div>
+          <div class="card-desc">Введите URL и запустите</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="showInputP1('batch')">
+        <div class="card-icon orange">📦</div>
+        <div class="card-body">
+          <div class="card-title">Пакетный</div>
+          <div class="card-desc">Загрузите .xlsx с колонками URL</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+    <div style="height:32px"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: INPUT SINGLE P1 -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-input-single-p1">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_1')">←</button>
+      <div>
+        <div class="topbar-title">Одиночный запрос</div>
+        <div class="topbar-sub" id="sub-p1-single">W — категории</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">URL страницы</label>
+      <input class="input-field" id="p1-url" type="url" placeholder="https://...">
+    </div>
+    <button class="btn btn-primary" onclick="runSingleP1()" id="btn-run-p1">⚡ Запустить генерацию</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: PROJECT 2 -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-project_2">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">W — модели</div>
+        <div class="topbar-sub">Генерация по странице модели</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Категория</div>
+    <div class="card-list">
+      <div class="card" id="cat2-notebook" onclick="setCategory('notebook','project_2')">
+        <div class="card-icon purple">💻</div>
+        <div class="card-body">
+          <div class="card-title">Ноутбуки</div>
+          <div class="card-desc">Модели ноутбуков</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" id="cat2-phone" onclick="setCategory('phone','project_2')">
+        <div class="card-icon blue">📱</div>
+        <div class="card-body">
+          <div class="card-title">Смартфоны</div>
+          <div class="card-desc">Модели смартфонов</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="section-label">Оформление</div>
+    <div class="card-list">
+      <div class="toggle-row" onclick="toggleFormatting('p2')">
+        <div>
+          <div class="toggle-label">Применить оформление</div>
+          <div class="toggle-sub">Форматирование итогового документа</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-p2"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Режим</div>
+    <div class="card-list">
+      <div class="card" onclick="showScreen('screen-input-single-p2')">
+        <div class="card-icon green">📄</div>
+        <div class="card-body">
+          <div class="card-title">Одиночный</div>
+          <div class="card-desc">URL модели</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="showScreen('screen-upload-p2')">
+        <div class="card-icon orange">📦</div>
+        <div class="card-body">
+          <div class="card-title">Пакетный</div>
+          <div class="card-desc">Excel с колонкой model</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+    <div style="height:32px"></div>
+  </div>
+
+  <!-- INPUT SINGLE P2 -->
+  <div class="screen" id="screen-input-single-p2">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_2')">←</button>
+      <div>
+        <div class="topbar-title">Одиночный запрос</div>
+        <div class="topbar-sub">W — модели</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">URL страницы модели</label>
+      <input class="input-field" id="p2-url" type="url" placeholder="https://...">
+    </div>
+    <button class="btn btn-primary" onclick="sendToBot('p2_single')">⚡ Запустить генерацию</button>
+  </div>
+
+  <!-- UPLOAD P2 -->
+  <div class="screen" id="screen-upload-p2">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_2')">←</button>
+      <div>
+        <div class="topbar-title">Пакетная загрузка</div>
+        <div class="topbar-sub">W — модели</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="upload-area" id="upload-p2" onclick="triggerUpload('p2')">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-sub">Колонка: model — с URL страниц</div>
+    </div>
+    <input type="file" id="file-p2" accept=".xlsx" onchange="fileSelected('p2', this)">
+    <button class="btn btn-primary" onclick="sendToBot('p2_batch')" id="btn-p2-batch" disabled>⚡ Запустить пакетно</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: PROJECT 3 -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-project_3">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">Генерация статей</div>
+        <div class="topbar-sub">По названию темы</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Тип задачи</div>
+    <div class="card-list">
+      <div class="card" id="task-general" onclick="setProject3Task('general')">
+        <div class="card-icon green">📖</div>
+        <div class="card-body">
+          <div class="card-title">Общая генерация</div>
+          <div class="card-desc">Универсальные статьи</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" id="task-banka" onclick="setProject3Task('banka')">
+        <div class="card-icon orange">🏦</div>
+        <div class="card-body">
+          <div class="card-title">Банка</div>
+          <div class="card-desc">Банковская тематика</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+
+    <div class="section-label">Оформление</div>
+    <div class="card-list">
+      <div class="toggle-row" onclick="toggleFormatting('p3')">
+        <div>
+          <div class="toggle-label">Применить оформление</div>
+          <div class="toggle-sub">Форматирование итогового документа</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-p3"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Режим</div>
+    <div class="card-list">
+      <div class="card" onclick="showScreen('screen-input-single-p3')">
+        <div class="card-icon green">📄</div>
+        <div class="card-body">
+          <div class="card-title">Одиночный</div>
+          <div class="card-desc">Введите название статьи</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="showScreen('screen-upload-p3')">
+        <div class="card-icon orange">📦</div>
+        <div class="card-body">
+          <div class="card-title">Пакетный</div>
+          <div class="card-desc">Excel с колонкой name</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+    <div style="height:32px"></div>
+  </div>
+
+  <!-- INPUT SINGLE P3 -->
+  <div class="screen" id="screen-input-single-p3">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_3')">←</button>
+      <div>
+        <div class="topbar-title">Одиночный запрос</div>
+        <div class="topbar-sub">Генерация статей</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">Название статьи</label>
+      <textarea class="input-field" id="p3-name" rows="3" placeholder="Лучшие ноутбуки для работы..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="sendToBot('p3_single')">⚡ Запустить генерацию</button>
+  </div>
+
+  <!-- UPLOAD P3 -->
+  <div class="screen" id="screen-upload-p3">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_3')">←</button>
+      <div>
+        <div class="topbar-title">Пакетная загрузка</div>
+        <div class="topbar-sub">Генерация статей</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="upload-area" id="upload-p3" onclick="triggerUpload('p3')">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-sub">Колонка: name — с названиями статей</div>
+    </div>
+    <input type="file" id="file-p3" accept=".xlsx" onchange="fileSelected('p3', this)">
+    <button class="btn btn-primary" onclick="sendToBot('p3_batch')" id="btn-p3-batch" disabled>⚡ Запустить пакетно</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: PROJECT 4 -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-project_4">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">B — услуги</div>
+        <div class="topbar-sub">Описание банковских услуг</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Режим</div>
+    <div class="card-list">
+      <div class="card" onclick="showScreen('screen-input-single-p4')">
+        <div class="card-icon orange">📄</div>
+        <div class="card-body">
+          <div class="card-title">Одиночный</div>
+          <div class="card-desc">Введите название услуги</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="showScreen('screen-upload-p4')">
+        <div class="card-icon pink">📦</div>
+        <div class="card-body">
+          <div class="card-title">Пакетный</div>
+          <div class="card-desc">Excel с колонкой name</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+    <div style="height:32px"></div>
+  </div>
+
+  <!-- INPUT SINGLE P4 -->
+  <div class="screen" id="screen-input-single-p4">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_4')">←</button>
+      <div>
+        <div class="topbar-title">Одиночный запрос</div>
+        <div class="topbar-sub">B — услуги</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">Название услуги</label>
+      <input class="input-field" id="p4-name" placeholder="Ипотека на новостройку...">
+    </div>
+    <button class="btn btn-primary" onclick="sendToBot('p4_single')">⚡ Запустить генерацию</button>
+  </div>
+
+  <!-- UPLOAD P4 -->
+  <div class="screen" id="screen-upload-p4">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_4')">←</button>
+      <div>
+        <div class="topbar-title">Пакетная загрузка</div>
+        <div class="topbar-sub">B — услуги</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="upload-area" id="upload-p4" onclick="triggerUpload('p4')">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-sub">Колонка: name — с названиями услуг</div>
+    </div>
+    <input type="file" id="file-p4" accept=".xlsx" onchange="fileSelected('p4', this)">
+    <button class="btn btn-primary" onclick="sendToBot('p4_batch')" id="btn-p4-batch" disabled>⚡ Запустить пакетно</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: TOOL — ARTICLE IMAGE -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-tool-article_image">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">Изображение для статьи</div>
+        <div class="topbar-sub">По названию H1</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Формат</div>
+    <div class="chips">
+      <div class="chip selected" id="fmt-png-img" onclick="setImageFormat('png','img')">PNG</div>
+      <div class="chip" id="fmt-jpg-img" onclick="setImageFormat('jpg','img')">JPG</div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Режим</div>
+    <div class="card-list">
+      <div class="card" onclick="showScreen('screen-tool-image-single')">
+        <div class="card-icon teal">🖼️</div>
+        <div class="card-body">
+          <div class="card-title">Одиночный</div>
+          <div class="card-desc">Введите H1 статьи</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="showScreen('screen-tool-image-batch')">
+        <div class="card-icon orange">📦</div>
+        <div class="card-body">
+          <div class="card-title">Пакетный</div>
+          <div class="card-desc">Excel с колонкой url</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+    <div style="height:32px"></div>
+  </div>
+
+  <!-- TOOL IMAGE SINGLE -->
+  <div class="screen" id="screen-tool-image-single">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('tool-article_image')">←</button>
+      <div>
+        <div class="topbar-title">Генерация изображения</div>
+        <div class="topbar-sub">Одиночная</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">H1 статьи</label>
+      <input class="input-field" id="tool-h1" placeholder="Лучшие ноутбуки 2025...">
+    </div>
+    <button class="btn btn-primary" onclick="sendToBot('tool_image_single')">⚡ Сгенерировать</button>
+  </div>
+
+  <!-- TOOL IMAGE BATCH -->
+  <div class="screen" id="screen-tool-image-batch">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('tool-article_image')">←</button>
+      <div>
+        <div class="topbar-title">Пакетная генерация</div>
+        <div class="topbar-sub">Изображения для статей</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="upload-area" id="upload-tool-img" onclick="triggerUpload('tool-img')">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-sub">Колонка: url — со ссылками на статьи</div>
+    </div>
+    <input type="file" id="file-tool-img" accept=".xlsx" onchange="fileSelected('tool-img', this)">
+    <button class="btn btn-primary" onclick="sendToBot('tool_image_batch')" id="btn-tool-img-batch" disabled>⚡ Запустить пакетно</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: TOOL — ARTICLE IMAGE R -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-tool-article_image_r">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">Изображение по URL</div>
+        <div class="topbar-sub">Анализирует страницу</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Формат</div>
+    <div class="chips">
+      <div class="chip selected" id="fmt-png-imgr" onclick="setImageFormat('png','imgr')">PNG</div>
+      <div class="chip" id="fmt-jpg-imgr" onclick="setImageFormat('jpg','imgr')">JPG</div>
+    </div>
+
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">URL статьи</label>
+      <input class="input-field" id="tool-url-r" type="url" placeholder="https://...">
+    </div>
+    <button class="btn btn-primary" onclick="sendToBot('tool_image_r')">⚡ Сгенерировать</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: TOOL — META TAGS -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-tool-meta_tags">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">Генерация мета-тегов</div>
+        <div class="topbar-sub">Из .docx или .zip архива</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="upload-area" id="upload-meta" onclick="triggerUpload('meta')">
+      <div class="upload-icon">🏷️</div>
+      <div class="upload-title">Загрузить файл</div>
+      <div class="upload-sub">.docx или .zip с docx-файлами</div>
+    </div>
+    <input type="file" id="file-meta" accept=".docx,.zip" onchange="fileSelected('meta', this)">
+    <button class="btn btn-primary" onclick="sendToBot('tool_meta')" id="btn-meta" disabled>⚡ Сгенерировать мета-теги</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: TOOL — CHAT -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-tool-chat">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">AI Чат</div>
+        <div class="topbar-sub">Свободный диалог</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">Сообщение</label>
+      <textarea class="input-field" id="chat-msg" rows="5" placeholder="Задайте вопрос или дайте задание..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="sendToBot('tool_chat')">💬 Отправить</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: WAITING / GENERATION IN PROGRESS -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-waiting">
+    <div class="topbar">
+      <button class="topbar-back" onclick="stopAndGoHome()">←</button>
+      <div>
+        <div class="topbar-title">Генерация</div>
+        <div class="topbar-sub" id="waiting-sub">Запрос отправлен</div>
+      </div>
+    </div>
+    <div style="height:32px"></div>
+    <div class="status-box">
+      <div class="status-title">
+        <div class="spinner"></div>
+        <span id="waiting-title">Выполняется генерация...</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-label" id="progress-label">Ожидание ответа от бота...</div>
+    </div>
+    <div style="height:16px"></div>
+    <div style="padding:0 20px;font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
+      Бот обрабатывает запрос. Результат придёт сообщением в чат.<br>Можно вернуться и отправить новый запрос.
+    </div>
+    <button class="btn btn-danger" onclick="stopAndGoHome()" style="margin-top:20px">⛔ Остановить и вернуться</button>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+const state = {
+  category: { project_1: 'notebook', project_2: 'notebook' },
+  textType: { project_1: 'basic' },
+  formatting: { p1: true, p2: true, p3: true },
+  project3Task: 'general',
+  imageFormat: { img: 'png', imgr: 'png' },
+  files: {},
+  currentProject: null,
+};
+
+// ════════════════════════════════════════════════
+// TELEGRAM WEBAPP
+// ════════════════════════════════════════════════
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+function sendData(text) {
+  if (tg) {
+    tg.sendData(text);
+  } else {
+    // fallback: copy to clipboard for dev
+    navigator.clipboard?.writeText(text).catch(()=>{});
+    console.log('SEND:', text);
+  }
+}
+
+// ════════════════════════════════════════════════
+// SCREEN NAVIGATION
+// ════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) { el.classList.add('active'); window.scrollTo(0,0); }
+}
+
+function goHome() { showScreen('screen-home'); }
+
+function goBack(to) {
+  showScreen('screen-' + to);
+}
+
+// ════════════════════════════════════════════════
+// PROJECT SELECTION
+// ════════════════════════════════════════════════
+function selectProject(id) {
+  state.currentProject = id;
+  showScreen('screen-' + id);
+}
+
+function selectTool(id) {
+  showScreen('screen-tool-' + id);
+}
+
+// ════════════════════════════════════════════════
+// CATEGORY
+// ════════════════════════════════════════════════
+function setCategory(cat, project) {
+  state.category[project] = cat;
+  const prefix = project === 'project_1' ? 'cat' : 'cat2';
+  document.getElementById(prefix + '-notebook')?.classList.remove('selected');
+  document.getElementById(prefix + '-phone')?.classList.remove('selected');
+  document.getElementById(prefix + '-' + cat)?.classList.add('selected');
+  toast('Категория: ' + (cat === 'notebook' ? 'Ноутбуки' : 'Смартфоны'));
+}
+
+// ════════════════════════════════════════════════
+// TEXT TYPE
+// ════════════════════════════════════════════════
+function setTextType(type, proj) {
+  state.textType['project_' + proj] = type;
+  document.querySelectorAll('#chips-type-' + proj + ' .chip').forEach(c => c.classList.remove('selected'));
+  event.target.classList.add('selected');
+}
+
+// ════════════════════════════════════════════════
+// PROJECT 3 TASK
+// ════════════════════════════════════════════════
+function setProject3Task(task) {
+  state.project3Task = task;
+  document.getElementById('task-general')?.classList.remove('selected');
+  document.getElementById('task-banka')?.classList.remove('selected');
+  document.getElementById('task-' + task)?.classList.add('selected');
+  toast('Тип: ' + (task === 'general' ? 'Общая генерация' : 'Банка'));
+}
+
+// ════════════════════════════════════════════════
+// FORMATTING TOGGLE
+// ════════════════════════════════════════════════
+function toggleFormatting(id) {
+  state.formatting[id] = !state.formatting[id];
+  const el = document.getElementById('toggle-' + id);
+  if (el) el.classList.toggle('on', state.formatting[id]);
+}
+
+// ════════════════════════════════════════════════
+// IMAGE FORMAT
+// ════════════════════════════════════════════════
+function setImageFormat(fmt, key) {
+  state.imageFormat[key] = fmt;
+  document.getElementById('fmt-png-' + key)?.classList.toggle('selected', fmt==='png');
+  document.getElementById('fmt-jpg-' + key)?.classList.toggle('selected', fmt==='jpg');
+}
+
+// ════════════════════════════════════════════════
+// PROJECT 1 FLOW
+// ════════════════════════════════════════════════
+function showInputP1(mode) {
+  if (mode === 'single') {
+    showScreen('screen-input-single-p1');
+    document.getElementById('sub-p1-single').textContent =
+      (state.category.project_1 === 'notebook' ? '💻 Ноутбуки' : '📱 Смартфоны') +
+      ' · ' + (state.textType.project_1 || 'basic');
+  } else {
+    showScreen('screen-upload-p1') || showBatchP1();
+  }
+}
+
+function runSingleP1() {
+  const url = document.getElementById('p1-url').value.trim();
+  if (!url.startsWith('http')) { toast('⚠️ Введите корректный URL'); return; }
+  const cmd = `/run project_1 ${url} ${state.textType.project_1 || 'basic'} category:${state.category.project_1} fmt:${state.formatting.p1?'yes':'no'}`;
+  sendData(cmd);
+  showWaiting('W — категории · одиночный');
+}
+
+// ════════════════════════════════════════════════
+// UNIVERSAL SEND
+// ════════════════════════════════════════════════
+function sendToBot(action) {
+  let cmd = '';
+
+  if (action === 'p2_single') {
+    const url = document.getElementById('p2-url').value.trim();
+    if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
+    cmd = `/run project_2 ${url} category:${state.category.project_2} fmt:${state.formatting.p2?'yes':'no'}`;
+    showWaiting('W — модели · одиночный');
+  }
+
+  else if (action === 'p2_batch') {
+    if (!state.files.p2) { toast('⚠️ Выберите файл'); return; }
+    cmd = `/batch project_2 file:${state.files.p2} category:${state.category.project_2} fmt:${state.formatting.p2?'yes':'no'}`;
+    showWaiting('W — модели · пакетный');
+  }
+
+  else if (action === 'p3_single') {
+    const name = document.getElementById('p3-name').value.trim();
+    if (!name) { toast('⚠️ Введите название'); return; }
+    cmd = `/run project_3 ${name} task:${state.project3Task} fmt:${state.formatting.p3?'yes':'no'}`;
+    showWaiting('Статьи · ' + state.project3Task);
+  }
+
+  else if (action === 'p3_batch') {
+    if (!state.files.p3) { toast('⚠️ Выберите файл'); return; }
+    cmd = `/batch project_3 file:${state.files.p3} task:${state.project3Task} fmt:${state.formatting.p3?'yes':'no'}`;
+    showWaiting('Статьи · пакетный');
+  }
+
+  else if (action === 'p4_single') {
+    const name = document.getElementById('p4-name').value.trim();
+    if (!name) { toast('⚠️ Введите название услуги'); return; }
+    cmd = `/run project_4 ${name}`;
+    showWaiting('B — услуги · одиночный');
+  }
+
+  else if (action === 'p4_batch') {
+    if (!state.files.p4) { toast('⚠️ Выберите файл'); return; }
+    cmd = `/batch project_4 file:${state.files.p4}`;
+    showWaiting('B — услуги · пакетный');
+  }
+
+  else if (action === 'tool_image_single') {
+    const h1 = document.getElementById('tool-h1').value.trim();
+    if (!h1) { toast('⚠️ Введите H1'); return; }
+    cmd = `/tool article_image h1:${h1} format:${state.imageFormat.img}`;
+    showWaiting('Генерация изображения');
+  }
+
+  else if (action === 'tool_image_batch') {
+    if (!state.files['tool-img']) { toast('⚠️ Выберите файл'); return; }
+    cmd = `/tool article_image_batch file:${state.files['tool-img']} format:${state.imageFormat.img}`;
+    showWaiting('Изображения · пакетный');
+  }
+
+  else if (action === 'tool_image_r') {
+    const url = document.getElementById('tool-url-r').value.trim();
+    if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
+    cmd = `/tool article_image_r url:${url} format:${state.imageFormat.imgr}`;
+    showWaiting('Изображение по URL');
+  }
+
+  else if (action === 'tool_meta') {
+    if (!state.files.meta) { toast('⚠️ Выберите файл'); return; }
+    cmd = `/tool meta_tags file:${state.files.meta}`;
+    showWaiting('Генерация мета-тегов');
+  }
+
+  else if (action === 'tool_chat') {
+    const msg = document.getElementById('chat-msg').value.trim();
+    if (!msg) { toast('⚠️ Введите сообщение'); return; }
+    cmd = `/chat ${msg}`;
+    showWaiting('AI Чат');
+  }
+
+  if (cmd) sendData(cmd);
+}
+
+// ════════════════════════════════════════════════
+// WAITING SCREEN
+// ════════════════════════════════════════════════
+let progressTimer = null;
+let progressVal = 0;
+
+function showWaiting(subtitle) {
+  document.getElementById('waiting-sub').textContent = subtitle;
+  showScreen('screen-waiting');
+  startProgress();
+}
+
+function startProgress() {
+  progressVal = 0;
+  updateProgress(0, 'Запрос отправлен в бот...');
+  clearInterval(progressTimer);
+  progressTimer = setInterval(() => {
+    if (progressVal < 85) {
+      progressVal += Math.random() * 3;
+      updateProgress(progressVal, getProgressLabel(progressVal));
+    }
+  }, 1200);
+}
+
+function updateProgress(val, label) {
+  const fill = document.getElementById('progress-fill');
+  const lbl = document.getElementById('progress-label');
+  if (fill) fill.style.width = Math.min(val, 100) + '%';
+  if (lbl) lbl.textContent = label;
+}
+
+function getProgressLabel(v) {
+  if (v < 10) return 'Отправка запроса...';
+  if (v < 30) return 'Бот получил задачу...';
+  if (v < 55) return 'Идёт генерация...';
+  if (v < 75) return 'Обработка текста...';
+  return 'Финальное оформление...';
+}
+
+function stopAndGoHome() {
+  clearInterval(progressTimer);
+  sendData('/stop');
+  goHome();
+}
+
+// ════════════════════════════════════════════════
+// FILE UPLOAD
+// ════════════════════════════════════════════════
+function triggerUpload(key) {
+  document.getElementById('file-' + key)?.click();
+}
+
+function fileSelected(key, input) {
+  const file = input.files[0];
+  if (!file) return;
+  state.files[key] = file.name;
+  const area = document.getElementById('upload-' + key);
+  if (area) {
+    area.classList.add('has-file');
+    area.querySelector('.upload-title').textContent = '✅ ' + file.name;
+    area.querySelector('.upload-sub').textContent = (file.size / 1024).toFixed(0) + ' KB';
+  }
+  const btn = document.getElementById('btn-' + key + '-batch') || document.getElementById('btn-' + key);
+  if (btn) btn.disabled = false;
+  toast('Файл выбран: ' + file.name);
+}
+
+// ════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ════════════════════════════════════════════════
+// HAPTIC
+// ════════════════════════════════════════════════
+document.querySelectorAll('.card, .btn, .chip').forEach(el => {
+  el.addEventListener('click', () => {
+    tg?.HapticFeedback?.impactOccurred('light');
+  });
+});
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+// Set Telegram theme if available
+if (tg?.colorScheme === 'light') {
+  document.documentElement.style.setProperty('--bg', '#f5f5f7');
+  document.documentElement.style.setProperty('--surface', '#ffffff');
+  document.documentElement.style.setProperty('--surface2', '#f0f0f5');
+  document.documentElement.style.setProperty('--border', '#e0e0e8');
+  document.documentElement.style.setProperty('--text', '#0d0d0f');
+  document.documentElement.style.setProperty('--muted', '#888899');
+}
+</script>
+</body>
+</html>
