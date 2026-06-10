@@ -1231,6 +1231,7 @@ if (tg) {
 function sendData(obj) {
   const json = JSON.stringify(obj);
   if (tg) {
+    // ВАЖНО: sendData закрывает Mini App — вызываем последним
     tg.sendData(json);
   } else {
     navigator.clipboard?.writeText(json).catch(()=>{});
@@ -1349,7 +1350,6 @@ function runSingleP1() {
     category: state.category.project_1,
     fmt: state.formatting.p1,
   });
-  showWaiting('W — категории · одиночный');
 }
 
 // ════════════════════════════════════════════════
@@ -1361,85 +1361,72 @@ function sendToBot(action) {
     const url = document.getElementById('p2-url').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
     sendData({ cmd:'run', project:'project_2', url, category:state.category.project_2, fmt:state.formatting.p2 });
-    showWaiting('W — модели · одиночный');
   }
 
   else if (action === 'p2_batch') {
     if (!state.files.p2) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', project:'project_2', category:state.category.project_2, fmt:state.formatting.p2 });
-    showWaiting('W — модели · пакетный');
   }
 
   else if (action === 'p3_single') {
     const name = document.getElementById('p3-name').value.trim();
     if (!name) { toast('⚠️ Введите название'); return; }
     sendData({ cmd:'run', project:'project_3', name, task:state.project3Task, fmt:state.formatting.p3 });
-    showWaiting('Статьи · ' + state.project3Task);
   }
 
   else if (action === 'p3_batch') {
     if (!state.files.p3) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', project:'project_3', task:state.project3Task, fmt:state.formatting.p3 });
-    showWaiting('Статьи · пакетный');
   }
 
   else if (action === 'p4_single') {
     const name = document.getElementById('p4-name').value.trim();
     if (!name) { toast('⚠️ Введите название услуги'); return; }
     sendData({ cmd:'run', project:'project_4', name, fmt:true });
-    showWaiting('B — услуги · одиночный');
   }
 
   else if (action === 'p4_batch') {
     if (!state.files.p4) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', project:'project_4' });
-    showWaiting('B — услуги · пакетный');
   }
 
   else if (action === 'tool_image_prompt') {
     const prompt = document.getElementById('tool-prompt').value.trim();
     if (!prompt) { toast('⚠️ Введите промпт'); return; }
-    sendData({ cmd:'tool', tool:'image', prompt, format:state.imageFormat.img });
-    showWaiting('Генерация изображения');
+    sendData({ cmd:'tool', tool:'image', prompt, format:state.imageFormat.tool || 'png' });
   }
 
   else if (action === 'tool_image_single') {
     const h1 = document.getElementById('tool-h1').value.trim();
     if (!h1) { toast('⚠️ Введите H1'); return; }
     sendData({ cmd:'tool', tool:'article_image', h1, format:state.imageFormat.img });
-    showWaiting('Генерация изображения по статье');
   }
 
   else if (action === 'tool_image_batch') {
     if (!state.files['tool-img']) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', tool:'article_image', format:state.imageFormat.img });
-    showWaiting('Изображения · пакетный');
   }
 
   else if (action === 'tool_image_r') {
     const url = document.getElementById('tool-url-r').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
     sendData({ cmd:'tool', tool:'article_image_r', url, format:state.imageFormat.imgr });
-    showWaiting('Изображение по URL');
   }
 
   else if (action === 'tool_image_r_batch') {
     if (!state.files['tool-imgr']) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', tool:'article_image_r', format:state.imageFormat.imgr });
-    showWaiting('Изображения [R] · пакетный');
   }
 
   else if (action === 'tool_meta') {
     if (!state.files.meta) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', tool:'meta_tags' });
-    showWaiting('Генерация мета-тегов');
   }
 
   else if (action === 'tool_chat') {
     const msg = document.getElementById('chat-msg').value.trim();
     if (!msg) { toast('⚠️ Введите сообщение'); return; }
     sendData({ cmd:'chat', message: msg });
-    showWaiting('AI Чат');
   }
 }
 
