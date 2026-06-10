@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>ContentGen v20260610_3</title>
+<title>ContentGen</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
@@ -483,6 +483,19 @@
     background: var(--border);
     margin: 0 6px;
   }
+
+  /* ── INFO BANNER ── */
+  .info-banner {
+    margin: 0 20px 16px;
+    padding: 12px 14px;
+    background: rgba(124,106,247,0.1);
+    border: 1px solid rgba(124,106,247,0.25);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  .info-banner strong { color: var(--text); }
 </style>
 </head>
 <body>
@@ -675,6 +688,29 @@
     <button class="btn btn-primary" onclick="runSingleP1()" id="btn-run-p1">⚡ Запустить генерацию</button>
   </div>
 
+  <!-- UPLOAD P1 -->
+  <div class="screen" id="screen-upload-p1">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('project_1')">←</button>
+      <div>
+        <div class="topbar-title">Пакетная загрузка</div>
+        <div class="topbar-sub">W — категории</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="info-banner">
+      <strong>Как это работает:</strong> нажмите «Запустить» — панель закроется,
+      и бот попросит прислать Excel в чат. Файл нужно отправить сообщением боту.
+    </div>
+    <div class="upload-area" id="upload-p1" onclick="triggerUpload('p1')">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Подготовить Excel (опционально)</div>
+      <div class="upload-sub">Колонки: model, type — для справки</div>
+    </div>
+    <input type="file" id="file-p1" accept=".xlsx" onchange="fileSelected('p1', this)">
+    <button class="btn btn-primary" onclick="sendToBot('p1_batch')" id="btn-p1-batch">⚡ Запустить пакетно</button>
+  </div>
+
   <!-- ══════════════════════════════════════════ -->
   <!-- SCREEN: PROJECT 2 -->
   <!-- ══════════════════════════════════════════ -->
@@ -768,13 +804,17 @@
       </div>
     </div>
     <div style="height:20px"></div>
+    <div class="info-banner">
+      <strong>Как это работает:</strong> после запуска пришлите Excel в чат с ботом.
+      Колонка: <strong>model</strong> (URL страниц).
+    </div>
     <div class="upload-area" id="upload-p2" onclick="triggerUpload('p2')">
       <div class="upload-icon">📊</div>
-      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-title">Подготовить Excel (опционально)</div>
       <div class="upload-sub">Колонка: model — с URL страниц</div>
     </div>
     <input type="file" id="file-p2" accept=".xlsx" onchange="fileSelected('p2', this)">
-    <button class="btn btn-primary" onclick="sendToBot('p2_batch')" id="btn-p2-batch" disabled>⚡ Запустить пакетно</button>
+    <button class="btn btn-primary" onclick="sendToBot('p2_batch')" id="btn-p2-batch">⚡ Запустить пакетно</button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -870,13 +910,17 @@
       </div>
     </div>
     <div style="height:20px"></div>
+    <div class="info-banner">
+      <strong>Как это работает:</strong> после запуска пришлите Excel в чат с ботом.
+      Колонка: <strong>name</strong>.
+    </div>
     <div class="upload-area" id="upload-p3" onclick="triggerUpload('p3')">
       <div class="upload-icon">📊</div>
-      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-title">Подготовить Excel (опционально)</div>
       <div class="upload-sub">Колонка: name — с названиями статей</div>
     </div>
     <input type="file" id="file-p3" accept=".xlsx" onchange="fileSelected('p3', this)">
-    <button class="btn btn-primary" onclick="sendToBot('p3_batch')" id="btn-p3-batch" disabled>⚡ Запустить пакетно</button>
+    <button class="btn btn-primary" onclick="sendToBot('p3_batch')" id="btn-p3-batch">⚡ Запустить пакетно</button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -888,6 +932,17 @@
       <div>
         <div class="topbar-title">B — услуги</div>
         <div class="topbar-sub">Описание банковских услуг</div>
+      </div>
+    </div>
+
+    <div class="section-label">Оформление</div>
+    <div class="card-list">
+      <div class="toggle-row" onclick="toggleFormatting('p4')">
+        <div>
+          <div class="toggle-label">Применить оформление</div>
+          <div class="toggle-sub">Форматирование итогового документа</div>
+        </div>
+        <div class="toggle-switch on" id="toggle-p4"></div>
       </div>
     </div>
 
@@ -940,13 +995,17 @@
       </div>
     </div>
     <div style="height:20px"></div>
+    <div class="info-banner">
+      <strong>Как это работает:</strong> после запуска пришлите Excel в чат с ботом.
+      Колонка: <strong>name</strong>.
+    </div>
     <div class="upload-area" id="upload-p4" onclick="triggerUpload('p4')">
       <div class="upload-icon">📊</div>
-      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-title">Подготовить Excel (опционально)</div>
       <div class="upload-sub">Колонка: name — с названиями услуг</div>
     </div>
     <input type="file" id="file-p4" accept=".xlsx" onchange="fileSelected('p4', this)">
-    <button class="btn btn-primary" onclick="sendToBot('p4_batch')" id="btn-p4-batch" disabled>⚡ Запустить пакетно</button>
+    <button class="btn btn-primary" onclick="sendToBot('p4_batch')" id="btn-p4-batch">⚡ Запустить пакетно</button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -1008,7 +1067,7 @@
         <div class="card-icon orange">📦</div>
         <div class="card-body">
           <div class="card-title">Пакетный</div>
-          <div class="card-desc">Excel с колонкой url</div>
+          <div class="card-desc">Excel с колонкой url (H1 берётся со страницы)</div>
         </div>
         <div class="card-arrow">›</div>
       </div>
@@ -1043,13 +1102,17 @@
       </div>
     </div>
     <div style="height:20px"></div>
+    <div class="info-banner">
+      <strong>Как это работает:</strong> после запуска пришлите Excel в чат.
+      Колонка: <strong>url</strong> — бот возьмёт H1 со страницы.
+    </div>
     <div class="upload-area" id="upload-tool-img" onclick="triggerUpload('tool-img')">
       <div class="upload-icon">📊</div>
-      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-title">Подготовить Excel (опционально)</div>
       <div class="upload-sub">Колонка: url — со ссылками на статьи</div>
     </div>
     <input type="file" id="file-tool-img" accept=".xlsx" onchange="fileSelected('tool-img', this)">
-    <button class="btn btn-primary" onclick="sendToBot('tool_image_batch')" id="btn-tool-img-batch" disabled>⚡ Запустить пакетно</button>
+    <button class="btn btn-primary" onclick="sendToBot('tool_image_batch')" id="btn-tool-img-batch">⚡ Запустить пакетно</button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -1122,13 +1185,17 @@
       </div>
     </div>
     <div style="height:20px"></div>
+    <div class="info-banner">
+      <strong>Как это работает:</strong> после запуска пришлите .docx или .zip
+      с docx-файлами в чат с ботом.
+    </div>
     <div class="upload-area" id="upload-meta" onclick="triggerUpload('meta')">
       <div class="upload-icon">🏷️</div>
-      <div class="upload-title">Загрузить файл</div>
+      <div class="upload-title">Подготовить файл (опционально)</div>
       <div class="upload-sub">.docx или .zip с docx-файлами</div>
     </div>
     <input type="file" id="file-meta" accept=".docx,.zip" onchange="fileSelected('meta', this)">
-    <button class="btn btn-primary" onclick="sendToBot('tool_meta')" id="btn-meta" disabled>⚡ Сгенерировать мета-теги</button>
+    <button class="btn btn-primary" onclick="sendToBot('tool_meta')" id="btn-meta">⚡ Сгенерировать мета-теги</button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -1162,13 +1229,17 @@
       </div>
     </div>
     <div style="height:20px"></div>
+    <div class="info-banner">
+      <strong>Как это работает:</strong> после запуска пришлите Excel в чат.
+      Колонка: <strong>url</strong>.
+    </div>
     <div class="upload-area" id="upload-tool-imgr" onclick="triggerUpload('tool-imgr')">
       <div class="upload-icon">📊</div>
-      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-title">Подготовить Excel (опционально)</div>
       <div class="upload-sub">Колонка: url — со ссылками на статьи</div>
     </div>
     <input type="file" id="file-tool-imgr" accept=".xlsx" onchange="fileSelected('tool-imgr', this)">
-    <button class="btn btn-primary" onclick="sendToBot('tool_image_r_batch')" id="btn-tool-imgr-batch" disabled>⚡ Запустить пакетно</button>
+    <button class="btn btn-primary" onclick="sendToBot('tool_image_r_batch')" id="btn-tool-imgr-batch">⚡ Запустить пакетно</button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -1195,7 +1266,8 @@
     </div>
     <div style="height:16px"></div>
     <div style="padding:0 20px;font-size:13px;color:var(--muted);text-align:center;line-height:1.6">
-      Бот обрабатывает запрос. Результат придёт сообщением в чат.<br>Можно вернуться и отправить новый запрос.
+      Бот обрабатывает запрос. Результат придёт сообщением в чат.<br>
+      Для пакетного режима — не забудьте отправить файл в чат после закрытия панели.
     </div>
     <button class="btn btn-danger" onclick="stopAndGoHome()" style="margin-top:20px">⛔ Остановить и вернуться</button>
   </div>
@@ -1212,11 +1284,41 @@
 const state = {
   category: { project_1: 'notebook', project_2: 'notebook' },
   textType: { project_1: 'basic' },
-  formatting: { p1: true, p2: true, p3: true },
+  formatting: { p1: true, p2: true, p3: true, p4: true },
   project3Task: 'general',
-  imageFormat: { img: 'png', imgr: 'png' },
+  imageFormat: { img: 'png', imgr: 'png', tool: 'png' },
   files: {},
   currentProject: null,
+};
+
+const P1_TYPES = {
+  notebook: ['basic', 'memory', 'ozu', 'color', 'chip'],
+  phone: ['basic', 'memory', 'sim', 'color'],
+};
+
+const BACK_MAP = {
+  'screen-project_1': 'screen-home',
+  'screen-project_2': 'screen-home',
+  'screen-project_3': 'screen-home',
+  'screen-project_4': 'screen-home',
+  'screen-input-single-p1': 'screen-project_1',
+  'screen-upload-p1': 'screen-project_1',
+  'screen-input-single-p2': 'screen-project_2',
+  'screen-upload-p2': 'screen-project_2',
+  'screen-input-single-p3': 'screen-project_3',
+  'screen-upload-p3': 'screen-project_3',
+  'screen-input-single-p4': 'screen-project_4',
+  'screen-upload-p4': 'screen-project_4',
+  'screen-tool-image': 'screen-home',
+  'screen-tool-article_image': 'screen-home',
+  'screen-tool-article_image_r': 'screen-home',
+  'screen-tool-meta_tags': 'screen-home',
+  'screen-tool-chat': 'screen-home',
+  'screen-tool-image-single': 'screen-tool-article_image',
+  'screen-tool-image-batch': 'screen-tool-article_image',
+  'screen-tool-imgr-single': 'screen-tool-article_image_r',
+  'screen-tool-imgr-batch': 'screen-tool-article_image_r',
+  'screen-waiting': 'screen-home',
 };
 
 // ════════════════════════════════════════════════
@@ -1226,6 +1328,23 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
+  tg.enableClosingConfirmation();
+}
+
+function getActionLabel(obj) {
+  if (obj.cmd === 'batch') return 'Ожидание файла в чате';
+  if (obj.cmd === 'chat') return 'AI чат';
+  if (obj.cmd === 'tool') return 'Инструмент';
+  if (obj.cmd === 'run') {
+    const names = {
+      project_1: 'W — категории',
+      project_2: 'W — модели',
+      project_3: 'Генерация статей',
+      project_4: 'B — услуги',
+    };
+    return names[obj.project] || 'Генерация';
+  }
+  return 'Запрос';
 }
 
 function sendData(obj) {
@@ -1234,9 +1353,18 @@ function sendData(obj) {
     // ВАЖНО: sendData закрывает Mini App — вызываем последним
     tg.sendData(json);
   } else {
-    navigator.clipboard?.writeText(json).catch(()=>{});
+    navigator.clipboard?.writeText(json).catch(() => {});
     console.log('SEND:', json);
+    toast('Dev: команда в консоли');
   }
+}
+
+function sendWithFeedback(obj) {
+  if (obj.cmd !== 'stop') {
+    showWaiting(getActionLabel(obj));
+    tg?.HapticFeedback?.notificationOccurred('success');
+  }
+  setTimeout(() => sendData(obj), obj.cmd === 'stop' ? 0 : 400);
 }
 
 // ════════════════════════════════════════════════
@@ -1245,13 +1373,34 @@ function sendData(obj) {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(id);
-  if (el) { el.classList.add('active'); window.scrollTo(0,0); }
+  if (el) {
+    el.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+  updateBackButton(id);
 }
 
-function goHome() { showScreen('screen-home'); }
+function goHome() {
+  showScreen('screen-home');
+}
 
 function goBack(to) {
   showScreen('screen-' + to);
+}
+
+function navigateBack() {
+  const current = document.querySelector('.screen.active')?.id;
+  const prev = BACK_MAP[current] || 'screen-home';
+  showScreen(prev);
+}
+
+function updateBackButton(screenId) {
+  if (!tg?.BackButton) return;
+  if (screenId === 'screen-home') {
+    tg.BackButton.hide();
+  } else {
+    tg.BackButton.show();
+  }
 }
 
 // ════════════════════════════════════════════════
@@ -1275,7 +1424,25 @@ function setCategory(cat, project) {
   document.getElementById(prefix + '-notebook')?.classList.remove('selected');
   document.getElementById(prefix + '-phone')?.classList.remove('selected');
   document.getElementById(prefix + '-' + cat)?.classList.add('selected');
+  if (project === 'project_1') {
+    updateP1Chips();
+  }
   toast('Категория: ' + (cat === 'notebook' ? 'Ноутбуки' : 'Смартфоны'));
+}
+
+function updateP1Chips() {
+  const cat = state.category.project_1;
+  const types = P1_TYPES[cat] || P1_TYPES.notebook;
+  const current = state.textType.project_1;
+  if (!types.includes(current)) {
+    state.textType.project_1 = types[0];
+  }
+  const container = document.getElementById('chips-type-1');
+  if (!container) return;
+  container.innerHTML = types.map(type => (
+    `<div class="chip${state.textType.project_1 === type ? ' selected' : ''}" ` +
+    `onclick="setTextType('${type}', 1)">${type}</div>`
+  )).join('');
 }
 
 // ════════════════════════════════════════════════
@@ -1335,14 +1502,14 @@ function showInputP1(mode) {
       (state.category.project_1 === 'notebook' ? '💻 Ноутбуки' : '📱 Смартфоны') +
       ' · ' + (state.textType.project_1 || 'basic');
   } else {
-    showScreen('screen-upload-p1') || showBatchP1();
+    showScreen('screen-upload-p1');
   }
 }
 
 function runSingleP1() {
   const url = document.getElementById('p1-url').value.trim();
   if (!url.startsWith('http')) { toast('⚠️ Введите корректный URL'); return; }
-  sendData({
+  sendWithFeedback({
     cmd: 'run',
     project: 'project_1',
     url: url,
@@ -1357,76 +1524,80 @@ function runSingleP1() {
 // ════════════════════════════════════════════════
 function sendToBot(action) {
 
-  if (action === 'p2_single') {
+  if (action === 'p1_batch') {
+    sendWithFeedback({
+      cmd: 'batch',
+      project: 'project_1',
+      category: state.category.project_1,
+      type: state.textType.project_1 || 'basic',
+      fmt: state.formatting.p1,
+    });
+  }
+
+  else if (action === 'p2_single') {
     const url = document.getElementById('p2-url').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
-    sendData({ cmd:'run', project:'project_2', url, category:state.category.project_2, fmt:state.formatting.p2 });
+    sendWithFeedback({ cmd:'run', project:'project_2', url, category:state.category.project_2, fmt:state.formatting.p2 });
   }
 
   else if (action === 'p2_batch') {
-    if (!state.files.p2) { toast('⚠️ Выберите файл'); return; }
-    sendData({ cmd:'batch', project:'project_2', category:state.category.project_2, fmt:state.formatting.p2 });
+    sendWithFeedback({ cmd:'batch', project:'project_2', category:state.category.project_2, fmt:state.formatting.p2 });
   }
 
   else if (action === 'p3_single') {
     const name = document.getElementById('p3-name').value.trim();
     if (!name) { toast('⚠️ Введите название'); return; }
-    sendData({ cmd:'run', project:'project_3', name, task:state.project3Task, fmt:state.formatting.p3 });
+    sendWithFeedback({ cmd:'run', project:'project_3', name, task:state.project3Task, fmt:state.formatting.p3 });
   }
 
   else if (action === 'p3_batch') {
-    if (!state.files.p3) { toast('⚠️ Выберите файл'); return; }
-    sendData({ cmd:'batch', project:'project_3', task:state.project3Task, fmt:state.formatting.p3 });
+    sendWithFeedback({ cmd:'batch', project:'project_3', task:state.project3Task, fmt:state.formatting.p3 });
   }
 
   else if (action === 'p4_single') {
     const name = document.getElementById('p4-name').value.trim();
     if (!name) { toast('⚠️ Введите название услуги'); return; }
-    sendData({ cmd:'run', project:'project_4', name, fmt:true });
+    sendWithFeedback({ cmd:'run', project:'project_4', name, fmt:state.formatting.p4 });
   }
 
   else if (action === 'p4_batch') {
-    if (!state.files.p4) { toast('⚠️ Выберите файл'); return; }
-    sendData({ cmd:'batch', project:'project_4' });
+    sendWithFeedback({ cmd:'batch', project:'project_4', fmt: state.formatting.p4 });
   }
 
   else if (action === 'tool_image_prompt') {
     const prompt = document.getElementById('tool-prompt').value.trim();
     if (!prompt) { toast('⚠️ Введите промпт'); return; }
-    sendData({ cmd:'tool', tool:'image', prompt, format:state.imageFormat.tool || 'png' });
+    sendWithFeedback({ cmd:'tool', tool:'image', prompt, format:state.imageFormat.tool || 'png' });
   }
 
   else if (action === 'tool_image_single') {
     const h1 = document.getElementById('tool-h1').value.trim();
     if (!h1) { toast('⚠️ Введите H1'); return; }
-    sendData({ cmd:'tool', tool:'article_image', h1, format:state.imageFormat.img });
+    sendWithFeedback({ cmd:'tool', tool:'article_image', h1, format:state.imageFormat.img });
   }
 
   else if (action === 'tool_image_batch') {
-    if (!state.files['tool-img']) { toast('⚠️ Выберите файл'); return; }
-    sendData({ cmd:'batch', tool:'article_image', format:state.imageFormat.img });
+    sendWithFeedback({ cmd:'batch', tool:'article_image', format:state.imageFormat.img });
   }
 
   else if (action === 'tool_image_r') {
     const url = document.getElementById('tool-url-r').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
-    sendData({ cmd:'tool', tool:'article_image_r', url, format:state.imageFormat.imgr });
+    sendWithFeedback({ cmd:'tool', tool:'article_image_r', url, format:state.imageFormat.imgr });
   }
 
   else if (action === 'tool_image_r_batch') {
-    if (!state.files['tool-imgr']) { toast('⚠️ Выберите файл'); return; }
-    sendData({ cmd:'batch', tool:'article_image_r', format:state.imageFormat.imgr });
+    sendWithFeedback({ cmd:'batch', tool:'article_image_r', format:state.imageFormat.imgr });
   }
 
   else if (action === 'tool_meta') {
-    if (!state.files.meta) { toast('⚠️ Выберите файл'); return; }
-    sendData({ cmd:'batch', tool:'meta_tags' });
+    sendWithFeedback({ cmd:'batch', tool:'meta_tags' });
   }
 
   else if (action === 'tool_chat') {
     const msg = document.getElementById('chat-msg').value.trim();
     if (!msg) { toast('⚠️ Введите сообщение'); return; }
-    sendData({ cmd:'chat', message: msg });
+    sendWithFeedback({ cmd:'chat', message: msg });
   }
 }
 
@@ -1471,8 +1642,8 @@ function getProgressLabel(v) {
 
 function stopAndGoHome() {
   clearInterval(progressTimer);
-  sendData({ cmd: 'stop' });
-  goHome();
+  sendWithFeedback({ cmd: 'stop' });
+  setTimeout(goHome, 300);
 }
 
 // ════════════════════════════════════════════════
@@ -1492,9 +1663,7 @@ function fileSelected(key, input) {
     area.querySelector('.upload-title').textContent = '✅ ' + file.name;
     area.querySelector('.upload-sub').textContent = (file.size / 1024).toFixed(0) + ' KB';
   }
-  const btn = document.getElementById('btn-' + key + '-batch') || document.getElementById('btn-' + key);
-  if (btn) btn.disabled = false;
-  toast('Файл выбран: ' + file.name);
+  toast('Файл отмечен: ' + file.name + ' — отправьте его в чат после запуска');
 }
 
 // ════════════════════════════════════════════════
@@ -1521,15 +1690,33 @@ document.querySelectorAll('.card, .btn, .chip').forEach(el => {
 // ════════════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════════════
-// Set Telegram theme if available
-if (tg?.colorScheme === 'light') {
-  document.documentElement.style.setProperty('--bg', '#f5f5f7');
-  document.documentElement.style.setProperty('--surface', '#ffffff');
-  document.documentElement.style.setProperty('--surface2', '#f0f0f5');
-  document.documentElement.style.setProperty('--border', '#e0e0e8');
-  document.documentElement.style.setProperty('--text', '#0d0d0f');
-  document.documentElement.style.setProperty('--muted', '#888899');
+function applyTelegramTheme() {
+  const tp = tg?.themeParams;
+  if (!tp) return;
+
+  if (tp.bg_color) document.documentElement.style.setProperty('--bg', tp.bg_color);
+  if (tp.secondary_bg_color) {
+    document.documentElement.style.setProperty('--surface', tp.secondary_bg_color);
+    document.documentElement.style.setProperty('--surface2', tp.secondary_bg_color);
+  }
+  if (tp.text_color) document.documentElement.style.setProperty('--text', tp.text_color);
+  if (tp.hint_color) document.documentElement.style.setProperty('--muted', tp.hint_color);
+  if (tp.button_color) document.documentElement.style.setProperty('--accent', tp.button_color);
+  if (tp.button_text_color) {
+    document.documentElement.style.setProperty('--accent-text', tp.button_text_color);
+  }
 }
+
+if (tg?.BackButton) {
+  tg.BackButton.onClick(navigateBack);
+}
+
+applyTelegramTheme();
+updateP1Chips();
+document.getElementById('cat-notebook')?.classList.add('selected');
+document.getElementById('cat2-notebook')?.classList.add('selected');
+document.getElementById('task-general')?.classList.add('selected');
+updateBackButton('screen-home');
 </script>
 </body>
 </html>
