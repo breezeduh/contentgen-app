@@ -536,11 +536,19 @@
 
     <div class="section-label">Инструменты</div>
     <div class="card-list">
-      <div class="card" onclick="selectTool('article_image')">
+      <div class="card" onclick="showScreen('screen-tool-image')">
         <div class="card-icon teal">🖼️</div>
         <div class="card-body">
+          <div class="card-title">Генерация изображения</div>
+          <div class="card-desc">По произвольному промпту</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="selectTool('article_image')">
+        <div class="card-icon teal">📰</div>
+        <div class="card-body">
           <div class="card-title">Изображение для статьи</div>
-          <div class="card-desc">Генерация по названию статьи</div>
+          <div class="card-desc">По H1 статьи (одиночный / пакетный)</div>
         </div>
         <div class="card-arrow">›</div>
       </div>
@@ -942,6 +950,32 @@
   </div>
 
   <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: TOOL — SIMPLE IMAGE (по промпту) -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-tool-image">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goHome()">←</button>
+      <div>
+        <div class="topbar-title">Генерация изображения</div>
+        <div class="topbar-sub">По произвольному промпту</div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px">Формат</div>
+    <div class="chips">
+      <div class="chip selected" id="fmt-png-tool" onclick="setImageFormatTool('png')">PNG</div>
+      <div class="chip" id="fmt-jpg-tool" onclick="setImageFormatTool('jpg')">JPG</div>
+    </div>
+
+    <div style="height:20px"></div>
+    <div class="input-wrap">
+      <label class="input-label">Промпт для генерации</label>
+      <textarea class="input-field" id="tool-prompt" rows="5" placeholder="Describe the image you want to generate..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="sendToBot('tool_image_prompt')">⚡ Сгенерировать</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
   <!-- SCREEN: TOOL — ARTICLE IMAGE -->
   <!-- ══════════════════════════════════════════ -->
   <div class="screen" id="screen-tool-article_image">
@@ -1036,6 +1070,38 @@
       <div class="chip" id="fmt-jpg-imgr" onclick="setImageFormat('jpg','imgr')">JPG</div>
     </div>
 
+    <div class="divider"></div>
+    <div class="section-label">Режим</div>
+    <div class="card-list">
+      <div class="card" onclick="showScreen('screen-tool-imgr-single')">
+        <div class="card-icon teal">🌐</div>
+        <div class="card-body">
+          <div class="card-title">Одиночный</div>
+          <div class="card-desc">Введите URL статьи</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+      <div class="card" onclick="showScreen('screen-tool-imgr-batch')">
+        <div class="card-icon orange">📦</div>
+        <div class="card-body">
+          <div class="card-title">Пакетный</div>
+          <div class="card-desc">Excel с колонкой url</div>
+        </div>
+        <div class="card-arrow">›</div>
+      </div>
+    </div>
+    <div style="height:32px"></div>
+  </div>
+
+  <!-- TOOL IMAGE R SINGLE -->
+  <div class="screen" id="screen-tool-imgr-single">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('tool-article_image_r')">←</button>
+      <div>
+        <div class="topbar-title">Изображение по URL</div>
+        <div class="topbar-sub">Одиночный</div>
+      </div>
+    </div>
     <div style="height:20px"></div>
     <div class="input-wrap">
       <label class="input-label">URL статьи</label>
@@ -1082,6 +1148,27 @@
       <textarea class="input-field" id="chat-msg" rows="5" placeholder="Задайте вопрос или дайте задание..."></textarea>
     </div>
     <button class="btn btn-primary" onclick="sendToBot('tool_chat')">💬 Отправить</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SCREEN: TOOL — ARTICLE IMAGE R BATCH -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="screen" id="screen-tool-imgr-batch">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goBack('tool-article_image_r')">←</button>
+      <div>
+        <div class="topbar-title">Пакетная генерация</div>
+        <div class="topbar-sub">Изображения по URL [R]</div>
+      </div>
+    </div>
+    <div style="height:20px"></div>
+    <div class="upload-area" id="upload-tool-imgr" onclick="triggerUpload('tool-imgr')">
+      <div class="upload-icon">📊</div>
+      <div class="upload-title">Загрузить Excel</div>
+      <div class="upload-sub">Колонка: url — со ссылками на статьи</div>
+    </div>
+    <input type="file" id="file-tool-imgr" accept=".xlsx" onchange="fileSelected('tool-imgr', this)">
+    <button class="btn btn-primary" onclick="sendToBot('tool_image_r_batch')" id="btn-tool-imgr-batch" disabled>⚡ Запустить пакетно</button>
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -1141,13 +1228,13 @@ if (tg) {
   tg.expand();
 }
 
-function sendData(text) {
+function sendData(obj) {
+  const json = JSON.stringify(obj);
   if (tg) {
-    tg.sendData(text);
+    tg.sendData(json);
   } else {
-    // fallback: copy to clipboard for dev
-    navigator.clipboard?.writeText(text).catch(()=>{});
-    console.log('SEND:', text);
+    navigator.clipboard?.writeText(json).catch(()=>{});
+    console.log('SEND:', json);
   }
 }
 
@@ -1220,6 +1307,15 @@ function toggleFormatting(id) {
 }
 
 // ════════════════════════════════════════════════
+// IMAGE FORMAT (simple tool)
+// ════════════════════════════════════════════════
+function setImageFormatTool(fmt) {
+  state.imageFormat.tool = fmt;
+  document.getElementById('fmt-png-tool')?.classList.toggle('selected', fmt==='png');
+  document.getElementById('fmt-jpg-tool')?.classList.toggle('selected', fmt==='jpg');
+}
+
+// ════════════════════════════════════════════════
 // IMAGE FORMAT
 // ════════════════════════════════════════════════
 function setImageFormat(fmt, key) {
@@ -1245,8 +1341,14 @@ function showInputP1(mode) {
 function runSingleP1() {
   const url = document.getElementById('p1-url').value.trim();
   if (!url.startsWith('http')) { toast('⚠️ Введите корректный URL'); return; }
-  const cmd = `/run project_1 ${url} ${state.textType.project_1 || 'basic'} category:${state.category.project_1} fmt:${state.formatting.p1?'yes':'no'}`;
-  sendData(cmd);
+  sendData({
+    cmd: 'run',
+    project: 'project_1',
+    url: url,
+    type: state.textType.project_1 || 'basic',
+    category: state.category.project_1,
+    fmt: state.formatting.p1,
+  });
   showWaiting('W — категории · одиночный');
 }
 
@@ -1254,81 +1356,91 @@ function runSingleP1() {
 // UNIVERSAL SEND
 // ════════════════════════════════════════════════
 function sendToBot(action) {
-  let cmd = '';
 
   if (action === 'p2_single') {
     const url = document.getElementById('p2-url').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
-    cmd = `/run project_2 ${url} category:${state.category.project_2} fmt:${state.formatting.p2?'yes':'no'}`;
+    sendData({ cmd:'run', project:'project_2', url, category:state.category.project_2, fmt:state.formatting.p2 });
     showWaiting('W — модели · одиночный');
   }
 
   else if (action === 'p2_batch') {
     if (!state.files.p2) { toast('⚠️ Выберите файл'); return; }
-    cmd = `/batch project_2 file:${state.files.p2} category:${state.category.project_2} fmt:${state.formatting.p2?'yes':'no'}`;
+    sendData({ cmd:'batch', project:'project_2', category:state.category.project_2, fmt:state.formatting.p2 });
     showWaiting('W — модели · пакетный');
   }
 
   else if (action === 'p3_single') {
     const name = document.getElementById('p3-name').value.trim();
     if (!name) { toast('⚠️ Введите название'); return; }
-    cmd = `/run project_3 ${name} task:${state.project3Task} fmt:${state.formatting.p3?'yes':'no'}`;
+    sendData({ cmd:'run', project:'project_3', name, task:state.project3Task, fmt:state.formatting.p3 });
     showWaiting('Статьи · ' + state.project3Task);
   }
 
   else if (action === 'p3_batch') {
     if (!state.files.p3) { toast('⚠️ Выберите файл'); return; }
-    cmd = `/batch project_3 file:${state.files.p3} task:${state.project3Task} fmt:${state.formatting.p3?'yes':'no'}`;
+    sendData({ cmd:'batch', project:'project_3', task:state.project3Task, fmt:state.formatting.p3 });
     showWaiting('Статьи · пакетный');
   }
 
   else if (action === 'p4_single') {
     const name = document.getElementById('p4-name').value.trim();
     if (!name) { toast('⚠️ Введите название услуги'); return; }
-    cmd = `/run project_4 ${name}`;
+    sendData({ cmd:'run', project:'project_4', name, fmt:true });
     showWaiting('B — услуги · одиночный');
   }
 
   else if (action === 'p4_batch') {
     if (!state.files.p4) { toast('⚠️ Выберите файл'); return; }
-    cmd = `/batch project_4 file:${state.files.p4}`;
+    sendData({ cmd:'batch', project:'project_4' });
     showWaiting('B — услуги · пакетный');
+  }
+
+  else if (action === 'tool_image_prompt') {
+    const prompt = document.getElementById('tool-prompt').value.trim();
+    if (!prompt) { toast('⚠️ Введите промпт'); return; }
+    sendData({ cmd:'tool', tool:'image', prompt, format:state.imageFormat.img });
+    showWaiting('Генерация изображения');
   }
 
   else if (action === 'tool_image_single') {
     const h1 = document.getElementById('tool-h1').value.trim();
     if (!h1) { toast('⚠️ Введите H1'); return; }
-    cmd = `/tool article_image h1:${h1} format:${state.imageFormat.img}`;
-    showWaiting('Генерация изображения');
+    sendData({ cmd:'tool', tool:'article_image', h1, format:state.imageFormat.img });
+    showWaiting('Генерация изображения по статье');
   }
 
   else if (action === 'tool_image_batch') {
     if (!state.files['tool-img']) { toast('⚠️ Выберите файл'); return; }
-    cmd = `/tool article_image_batch file:${state.files['tool-img']} format:${state.imageFormat.img}`;
+    sendData({ cmd:'batch', tool:'article_image', format:state.imageFormat.img });
     showWaiting('Изображения · пакетный');
   }
 
   else if (action === 'tool_image_r') {
     const url = document.getElementById('tool-url-r').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
-    cmd = `/tool article_image_r url:${url} format:${state.imageFormat.imgr}`;
+    sendData({ cmd:'tool', tool:'article_image_r', url, format:state.imageFormat.imgr });
     showWaiting('Изображение по URL');
+  }
+
+  else if (action === 'tool_image_r_batch') {
+    if (!state.files['tool-imgr']) { toast('⚠️ Выберите файл'); return; }
+    sendData({ cmd:'batch', tool:'article_image_r', format:state.imageFormat.imgr });
+    showWaiting('Изображения [R] · пакетный');
   }
 
   else if (action === 'tool_meta') {
     if (!state.files.meta) { toast('⚠️ Выберите файл'); return; }
-    cmd = `/tool meta_tags file:${state.files.meta}`;
+    sendData({ cmd:'batch', tool:'meta_tags' });
     showWaiting('Генерация мета-тегов');
   }
 
   else if (action === 'tool_chat') {
     const msg = document.getElementById('chat-msg').value.trim();
     if (!msg) { toast('⚠️ Введите сообщение'); return; }
-    cmd = `/chat ${msg}`;
+    sendData({ cmd:'chat', message: msg });
     showWaiting('AI Чат');
   }
-
-  if (cmd) sendData(cmd);
 }
 
 // ════════════════════════════════════════════════
@@ -1372,7 +1484,7 @@ function getProgressLabel(v) {
 
 function stopAndGoHome() {
   clearInterval(progressTimer);
-  sendData('/stop');
+  sendData({ cmd: 'stop' });
   goHome();
 }
 
