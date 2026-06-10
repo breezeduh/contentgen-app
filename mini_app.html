@@ -1227,7 +1227,7 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
-  console.log('Telegram WebApp initialized:', tg);
+  console.log('Telegram WebApp initialized');
   console.log('initData:', tg.initData);
 }
 
@@ -1237,23 +1237,18 @@ function sendData(obj) {
   console.log('SEND DATA CALLED:', json);
 
   if (!window.Telegram || !window.Telegram.WebApp) {
-    console.log('Telegram WebApp API not found. Data:', json);
-    alert('Telegram WebApp API не найден. Открой Mini App именно внутри Telegram.');
+    alert('Telegram WebApp API не найден. Открой Mini App через кнопку бота в Telegram.');
+    console.log('SEND FALLBACK:', json);
     return;
   }
 
   try {
     window.Telegram.WebApp.sendData(json);
     console.log('DATA SENT TO BOT');
-
-    // Явно закрываем окно после отправки.
-    // Если Mini App открыт через правильную Reply Keyboard кнопку,
-    // Telegram также сам закрывает окно после sendData.
     window.Telegram.WebApp.close();
-
   } catch (e) {
     console.error('SEND DATA ERROR:', e);
-    alert('Ошибка отправки данных в бота: ' + e.message);
+    alert('Ошибка отправки данных: ' + (e.message || e));
   }
 }
 
@@ -1353,7 +1348,14 @@ function showInputP1(mode) {
       (state.category.project_1 === 'notebook' ? '💻 Ноутбуки' : '📱 Смартфоны') +
       ' · ' + (state.textType.project_1 || 'basic');
   } else {
-    showScreen('screen-upload-p1') || showBatchP1();
+    toast('Пакетный режим проекта 1 запускается из текстового меню после загрузки Excel в бот');
+    sendData({
+      cmd: 'batch',
+      project: 'project_1',
+      type: state.textType.project_1 || 'basic',
+      category: state.category.project_1,
+      fmt: state.formatting.p1,
+    });
   }
 }
 
@@ -1368,6 +1370,7 @@ function runSingleP1() {
     category: state.category.project_1,
     fmt: state.formatting.p1,
   });
+  showWaiting('W — категории · одиночный');
 }
 
 // ════════════════════════════════════════════════
@@ -1379,72 +1382,85 @@ function sendToBot(action) {
     const url = document.getElementById('p2-url').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
     sendData({ cmd:'run', project:'project_2', url, category:state.category.project_2, fmt:state.formatting.p2 });
+    showWaiting('W — модели · одиночный');
   }
 
   else if (action === 'p2_batch') {
     if (!state.files.p2) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', project:'project_2', category:state.category.project_2, fmt:state.formatting.p2 });
+    showWaiting('W — модели · пакетный');
   }
 
   else if (action === 'p3_single') {
     const name = document.getElementById('p3-name').value.trim();
     if (!name) { toast('⚠️ Введите название'); return; }
     sendData({ cmd:'run', project:'project_3', name, task:state.project3Task, fmt:state.formatting.p3 });
+    showWaiting('Статьи · ' + state.project3Task);
   }
 
   else if (action === 'p3_batch') {
     if (!state.files.p3) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', project:'project_3', task:state.project3Task, fmt:state.formatting.p3 });
+    showWaiting('Статьи · пакетный');
   }
 
   else if (action === 'p4_single') {
     const name = document.getElementById('p4-name').value.trim();
     if (!name) { toast('⚠️ Введите название услуги'); return; }
     sendData({ cmd:'run', project:'project_4', name, fmt:true });
+    showWaiting('B — услуги · одиночный');
   }
 
   else if (action === 'p4_batch') {
     if (!state.files.p4) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', project:'project_4' });
+    showWaiting('B — услуги · пакетный');
   }
 
   else if (action === 'tool_image_prompt') {
     const prompt = document.getElementById('tool-prompt').value.trim();
     if (!prompt) { toast('⚠️ Введите промпт'); return; }
-    sendData({ cmd:'tool', tool:'image', prompt, format:state.imageFormat.tool || 'png' });
+    sendData({ cmd:'tool', tool:'image', prompt, format:state.imageFormat.img });
+    showWaiting('Генерация изображения');
   }
 
   else if (action === 'tool_image_single') {
     const h1 = document.getElementById('tool-h1').value.trim();
     if (!h1) { toast('⚠️ Введите H1'); return; }
     sendData({ cmd:'tool', tool:'article_image', h1, format:state.imageFormat.img });
+    showWaiting('Генерация изображения по статье');
   }
 
   else if (action === 'tool_image_batch') {
     if (!state.files['tool-img']) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', tool:'article_image', format:state.imageFormat.img });
+    showWaiting('Изображения · пакетный');
   }
 
   else if (action === 'tool_image_r') {
     const url = document.getElementById('tool-url-r').value.trim();
     if (!url.startsWith('http')) { toast('⚠️ Введите URL'); return; }
     sendData({ cmd:'tool', tool:'article_image_r', url, format:state.imageFormat.imgr });
+    showWaiting('Изображение по URL');
   }
 
   else if (action === 'tool_image_r_batch') {
     if (!state.files['tool-imgr']) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', tool:'article_image_r', format:state.imageFormat.imgr });
+    showWaiting('Изображения [R] · пакетный');
   }
 
   else if (action === 'tool_meta') {
     if (!state.files.meta) { toast('⚠️ Выберите файл'); return; }
     sendData({ cmd:'batch', tool:'meta_tags' });
+    showWaiting('Генерация мета-тегов');
   }
 
   else if (action === 'tool_chat') {
     const msg = document.getElementById('chat-msg').value.trim();
     if (!msg) { toast('⚠️ Введите сообщение'); return; }
     sendData({ cmd:'chat', message: msg });
+    showWaiting('AI Чат');
   }
 }
 
